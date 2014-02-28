@@ -1,0 +1,49 @@
+Changelog
+=========
+
+0.13b2
+------
+
+- Corrected error messages. Added a dedicated test to be sure it raises
+  the correct errors on view lookup failure.
+
+
+0.13b1
+------
+
+- Added the interface `ILookupComponent` that describe a common behavior
+  for all the components involved in the look up : `ModelLookup`,
+  `ViewLookup`, `Traverser`. The `__call__` method of `ModelLookup`,
+  `ViewLookup` and `Traverser` has been harmonized accordingly.
+- `ModelLookup` is no longer responsible fro the stack computation.
+  This has now to be handled outside of the component and given as
+  an argument to the `__call__` method.
+- The namespaces now have now exposed markers to avoid mistyping.
+- `parse_path` and `create_path` are now in their own module.
+- The default view name is now called `default_name` on the `ViewLookup`
+  component.
+- The lookup method is now called `lookup` on the `ViewLookup`
+  component.
+
+
+0.12b1
+------
+
+Bug fix : a//b//c equivalent to a/b/c/ equivalent to a/b/c
+
+
+0.12a
+-----
+
+This version was made by Dolmen Team in order to work with cromlech stack
+
+- reduced dependencies
+- pep8 and code cleanup
+- added request to model lookup consumers call so traversing with adapters
+  may work similarly to zope
+
+
+0.11dev
+-------
+
+- Experimental version by Martijn Faassen

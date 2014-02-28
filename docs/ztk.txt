@@ -1,0 +1,35 @@
+In order to introduce Dawnlight into the ZTK, we would need
+to work on some libraries. 
+
+Some libraries probably only have a light dependency on
+zope.traversing and/or zope.publisher, and moving code out of them
+(where?)  will help to liberate them. zope.container is a primary
+example (freeing it would also free some other libraries that depend on it).
+ 
+Other libraries may have tighter dependencies, such as the libraries
+that define ZCML statements. Either we introduce the capability to
+access those registrations in Dawnlight, or we entirely rewrite them.
+
+Libraries with a dependency on zope.publisher include (not a complete set):
+
+* zope.container
+
+* zope.formlib
+
+* zope.login
+
+* zope.pluggableauth
+
+* zope.ptresource
+
+* zope.server
+
+* zope.session
+
+* zope.site (through zope.container)
+
+* zope.traversing
+
+* zope.viewlet (uses zope.browserpage too)
+
+* zope.browserpage
