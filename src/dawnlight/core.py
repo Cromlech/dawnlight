@@ -35,7 +35,7 @@ class ModelLookup(object):
     def __call__(self, request, obj, stack):
         """Traverses following stack components and starting from obj.
         """
-        unconsumed = stack[:]
+        unconsumed = stack.copy()
         while unconsumed:
             for consumer in self.lookup(obj):
                 any_consumed, obj, unconsumed = consumer(
@@ -114,7 +114,7 @@ class Traverser(object):
         self.func = func
 
     def __call__(self, request, obj, stack):
-        ns, name = stack.pop()
+        ns, name = stack.popleft()
         next_obj = self.func(obj, ns, name)
         if next_obj is None:
             stack.append((ns, name))

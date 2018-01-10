@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+from collections import deque
 from dawnlight import DEFAULT
 
 
@@ -20,24 +21,23 @@ def parse_path(path, shortcuts=None):
     Shortcuts only exist for namespaces and are applied to the beginning
     of the path.
     """
+    stack = deque()
+
+    path = path.strip('/')
+
+    if not path:
+        return stack
+
     if shortcuts is None:
         shortcuts = {}
 
-    if path == '/' or not path:
-        return []
-
-    if path.startswith('/'):
-        path = path[1:]
-
-    steps = re.split(r'/+', path.rstrip('/'))
-
-    result = []
+    steps = re.split(r'/+', path)
     for step in steps:
         for key, value in shortcuts.items():
             if step.startswith(key):
-                step = (u'++%s++' % value) + step[len(key):]
+                step = ('++%s++' % value) + step[len(key):]
                 break
-        if step.startswith(u'++'):
+        if step.startswith('++'):
             try:
                 ns, name = step[2:].split(u'++', 1)
             except ValueError:
@@ -46,9 +46,9 @@ def parse_path(path, shortcuts=None):
         else:
             ns = DEFAULT
             name = step
-        result.append((ns, name))
-    result.reverse()
-    return result
+        stack.append((ns, name))
+
+    return stack
 
 
 def create_path(stack, shortcuts=None):
@@ -65,14 +65,14 @@ def create_path(stack, shortcuts=None):
             assert value not in inversed_shortcuts
             inversed_shortcuts[value] = key
         shortcuts = inversed_shortcuts
-    result = []
-    for ns, name in reversed(stack):
+    path = deque()
+    for ns, name in stack:
         if ns == DEFAULT:
-            result.append(name)
+            path.append(name)
             continue
         shortcut = shortcuts.get(ns)
         if shortcut is not None:
-            result.append(shortcut + name)
+            path.append(shortcut + name)
             continue
-        result.append(u'++%s++%s' % (ns, name))
-    return '/' + u'/'.join(result)
+        path.append('++%s++%s' % (ns, name))
+    return '/' + '/'.join(path)

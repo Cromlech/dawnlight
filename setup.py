@@ -14,7 +14,6 @@ install_requires = [
     ]
 
 tests_require = [
-    'webtest',
     'WebOb',
     ]
 

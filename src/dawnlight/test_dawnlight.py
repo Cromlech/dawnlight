@@ -5,7 +5,6 @@ import webob
 from dawnlight import ResolveError, DEFAULT, VIEW
 from dawnlight.stack import parse_path, create_path
 from dawnlight.core import ModelLookup, Traverser, ViewLookup
-from webtest import TestApp
 
 
 class Container(dict):
@@ -54,25 +53,6 @@ class Application(object):
         return response(environ, start_response)
 
 
-class Traject(object):
-    """Consumer that is based on traject.
-
-    Give it a traject.Patterns registry and it will behave according
-    to traject.
-    """
-
-    def __init__(self, patterns):
-        self.patterns = patterns
-
-    def __call__(self, request, obj, stack):
-        stack = [name for (ns, name) in stack]
-        unconsumed, consumed, obj = self.patterns.consume_stack(
-            obj, stack, None)
-        unconsumed = [(DEFAULT, name) for name in unconsumed]
-        consumed_flag = bool(consumed)
-        return consumed_flag, obj, unconsumed
-
-
 def get_structure():
     """A structure of containers and models.
 
@@ -86,22 +66,22 @@ def get_structure():
     """
 
     root = Container()
-    root.__name__ = u''
+    root.__name__ = ''
     root.__parent___ = None
 
     a = Model()
     root['a'] = a
-    a.__name__ = u'a'
+    a.__name__ = 'a'
     a.__parent__ = root
 
     sub = Container()
     root['sub'] = sub
-    sub.__name__ = u'sub'
+    sub.__name__ = 'sub'
     sub.__parent__ = root
 
     b = Model()
     sub['b'] = b
-    b.__name__ = u'b'
+    b.__name__ = 'b'
     b.__parent__ = sub
 
     return root
@@ -110,103 +90,104 @@ def get_structure():
 def test_parse():
     """Parse a path to a stack, default namespaces.
     """
-    assert ([(DEFAULT, u'c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/c'))
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (DEFAULT, 'c')] ==
+            list(parse_path('/a/b/c')))
 
 
 def test_multi_slash():
-    assert parse_path(u'/a/b/c') == parse_path(u'/a///b//c')
-    assert parse_path(u'/a/b/c') == parse_path(u'/a/b/c/')
+    assert parse_path('/a/b/c') == parse_path('/a///b//c')
+    assert parse_path('/a/b/c') == parse_path('/a/b/c/')
 
 
 def test_create():
-    assert (u'/a/b/c' ==
+    assert ('/a/b/c' ==
             create_path([
-                (DEFAULT, u'c'),
-                (DEFAULT, u'b'),
-                (DEFAULT, u'a')]))
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (DEFAULT, 'c')]))
 
 
 def test_parse_ns():
     """Parse a path to a stack with namespaces.
     """
-    assert ([(VIEW, u'c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/++view++c'))
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (VIEW, 'c')] ==
+            list(parse_path('/a/b/++view++c')))
 
 
 def test_create_ns():
-    assert (u'/a/b/++view++c' ==
+    assert ('/a/b/++view++c' ==
             create_path([
-                (VIEW, u'c'),
-                (DEFAULT, u'b'),
-                (DEFAULT, u'a')]))
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (VIEW, 'c')]))
 
 
 def test_parse_ns_shortcut():
-    assert ([(VIEW, u'c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/@@c', shortcuts={u'@@': VIEW}))
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (VIEW, 'c')] ==
+            list(parse_path('/a/b/@@c', shortcuts={'@@': VIEW})))
 
 
 def test_create_ns_shortcut():
-    assert (u'/a/b/@@c' ==
+    assert ('/a/b/@@c' ==
             create_path([
-                (VIEW, u'c'),
-                (DEFAULT, u'b'),
-                (DEFAULT, u'a')], shortcuts={u'@@': VIEW}))
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (VIEW, 'c')], shortcuts={'@@': VIEW}))
 
 
 def test_parse_ns_shortcut_not_at_beginning():
     # shortcuts should be at the beginning of a step to be recognized
-    assert ([(DEFAULT, u'a@@c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/a@@c', shortcuts={u'@@': VIEW}))
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (DEFAULT, 'a@@c')] ==
+            list(parse_path('/a/b/a@@c', shortcuts={'@@': VIEW})))
 
 
 def test_create_ns_shortcut_not_at_beginning():
-    assert (u'/a/b/a@@c' ==
+    assert ('/a/b/a@@c' ==
             create_path([
-                (DEFAULT, u'a@@c'),
-                (DEFAULT, u'b'),
-                (DEFAULT, u'a')], shortcuts={u'@@': VIEW}))
-
-
-def test_parse_ns_weird_no_close():
-    # a namespace that opens but doesn't close
-    assert (u'/a/b/++c' ==
-            create_path([
-                (DEFAULT, u'++c'),
-                (DEFAULT, u'b'),
-                (DEFAULT, u'a')]))
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (DEFAULT, 'a@@c')], shortcuts={'@@': VIEW}))
 
 
 def test_create_ns_weird_no_close():
-    assert ([(DEFAULT, u'++c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/++c'))
+    # a namespace that opens but doesn't close
+    assert ('/a/b/++c' ==
+            create_path([
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (DEFAULT, '++c')]))
+
+
+def test_parse_ns_weird_no_close():
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (DEFAULT, '++c')] ==
+            list(parse_path('/a/b/++c')))
 
 
 def test_parse_ns_weird_no_open():
     # a namespace that closes but doesn't open
-    assert ([(DEFAULT, u'view++c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/view++c'))
+    assert ([(DEFAULT, 'a'),
+             (DEFAULT, 'b'),
+             (DEFAULT, 'view++c')] ==
+            list(parse_path('/a/b/view++c')))
 
 
 def test_create_ns_weird_no_open():
     # a namespace that closes but doesn't open
-    assert ([(DEFAULT, u'view++c'),
-             (DEFAULT, u'b'),
-             (DEFAULT, u'a')] ==
-            parse_path(u'/a/b/view++c'))
+    assert ('/a/b/view++c' ==
+            create_path([
+                (DEFAULT, 'a'),
+                (DEFAULT, 'b'),
+                (DEFAULT, 'view++c')]))
 
 # XXX removing /./ from paths and checking for ../
 
@@ -215,12 +196,12 @@ def test_resolve_no_consumers():
     lookup = ModelLookup()
     root = get_structure()
 
-    request = webob.Request.blank(u'/a')
+    request = webob.Request.blank('/a')
     stack = parse_path(request.path)
     obj, unconsumed = lookup(request, root, stack)
 
     assert obj is root
-    assert unconsumed == [(DEFAULT, u'a')]
+    assert list(unconsumed) == [(DEFAULT, 'a')]
 
 
 def test_resolve_traverse():
@@ -229,31 +210,38 @@ def test_resolve_traverse():
 
     root = get_structure()
 
-    request = webob.Request.blank(u'/a')
-    assert (root['a'], []) == lookup(
-        request, root, parse_path(request.path))
+    request = webob.Request.blank('/a')
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert obj == root['a'] and not left
 
-    request = webob.Request.blank(u'/sub')
-    assert (root['sub'], []) == lookup(
-        request, root, parse_path(request.path))
+    request = webob.Request.blank('/sub')
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert obj == root['sub'] and not left
 
-    request = webob.Request.blank(u'/sub/b')
-    assert (root['sub']['b'], []) == lookup(
-        request, root, parse_path(request.path))
+    request = webob.Request.blank('/sub/b')
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert obj == root['sub']['b'] and not left
 
-    request = webob.Request.blank(u'/c')
-    assert (root, [(DEFAULT, u'c')]) == lookup(
-        request, root, parse_path(request.path))
+    request = webob.Request.blank('/c')
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert obj == root and list(left) == [(DEFAULT, 'c')]
 
-    request = webob.Request.blank(u'/sub/c')
-    assert (root[u'sub'], [(DEFAULT, u'c')]) == lookup(
-        request, root, parse_path(request.path))
+    request = webob.Request.blank('/sub/c')
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert obj == root['sub'] and list(left) == [(DEFAULT, 'c')]
+
+    # We make sure the stack is untouched by the traversing
+    request = webob.Request.blank('/sub/c')
+    stack = parse_path(request.path)
+    obj, left = lookup(request, root, parse_path(request.path))
+    assert list(left) == [(DEFAULT, 'c')]
+    assert list(stack) == [('default', 'sub'), ('default', 'c')]
 
 
 def test_resolve_view():
     lookup = ViewLookup(view_lookup)
-    assert isinstance(lookup(webob.Request.blank(u"/"), Model(), ""),
-                      ModelView)
+    view = lookup(webob.Request.blank(u"/"), Model(), stack=[])
+    assert isinstance(view, ModelView)
 
 
 def test_view_errors():
