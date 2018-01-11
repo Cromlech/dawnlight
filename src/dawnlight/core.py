@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from copy import copy
 from dawnlight import DEFAULT, VIEW
 from dawnlight.interfaces import IConsumer, ILookupComponent
 from zope.interface.adapter import AdapterRegistry
@@ -35,7 +36,7 @@ class ModelLookup(object):
     def __call__(self, request, obj, stack):
         """Traverses following stack components and starting from obj.
         """
-        unconsumed = stack.copy()
+        unconsumed = copy(stack)  # using copy. py3.5+ can use stack.copy()
         while unconsumed:
             for consumer in self.lookup(obj):
                 any_consumed, obj, unconsumed = consumer(
