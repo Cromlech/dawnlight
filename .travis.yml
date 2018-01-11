@@ -1,0 +1,30 @@
+dist: trusty
+language: python
+# with next we get on container based infrastructure, this enables caching
+sudo: false
+python:
+  - 2.7
+  - 3.4
+  - 3.5
+  - 3.6
+
+cache:
+  pip: true
+  directories:
+    - $HOME/buildout-cache
+
+before_install:
+  - mkdir -p $HOME/buildout-cache/{eggs,downloads}
+  - virtualenv .
+  - bin/pip install --upgrade pip setuptools zc.buildout
+
+install:
+  - pip --version
+  - bin/buildout -N -t 20 -c buildout.cfg
+
+script:
+  - bin/pytest
+
+after_success:
+  - pip install -q coveralls python-coveralls==2.5.0
+  - coveralls
