@@ -246,37 +246,3 @@ and view lookup fails.
 
 View lookup also fails if no view is registered for the model under
 that name.
-
-
-View layers
------------
-
-Besides distinguishing views by name and content object, Dawnlight
-also supports registration of views for different types of request, to
-support a skin mechanism.
-
-
-Wishes
-======
-
-View predicates
----------------
-
-Idea: predicates can be indexed. Known indexes are used to increase
-the performance of the view lookup. One index is the interfaces of the
-model. Look into geniusql?
-
-Dawnlight also supports view predicates. A Dawnlight view can be
-registered with a number of predicates. Only if the predicates match
-will the view be returned. Predicates include request method (GET,
-PUT, POST), Content-Type, containment, route_name, request_method,
-xhr, accept, heade,r path_info (XXX check BFG and expand).
-
-A registration of a view is made using a list of predicates:
-
- view lookup registry.lookup(iface, name)[('method', 'PUT'),
-                                          ('container': Class)]
-
-XXX need to think of clever algorithm which only processes for the registered
-predicates for a view, and then can do quick lookup for matches. Needs to
-understand inheritance/interfaces in some cases, though.

@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.2 (ongoing)
+-------------
+
+- Stack is now a 'deque' object and is no longer a reversed iterable.
+- ...
+
+
 0.13b2
 ------
 
