@@ -14,11 +14,12 @@ install_requires = [
     ]
 
 tests_require = [
+    'pytest',
     'WebOb',
     ]
 
 setup(name='dawnlight',
-      version='0.13b2',
+      version='0.14.dev0',
       description="A web object publisher",
       long_description="%s\n\n%s" % (
           read('README.txt'), read(path.join('docs', 'HISTORY.txt'))),
